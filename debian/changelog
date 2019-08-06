@@ -1,3 +1,10 @@
+notify-osd (0.9.35+16.04.20160415-0ubuntu2) artful; urgency=medium
+
+  * No-change rebuild to pick up -fPIE compiler default in static
+    libraries
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 21 Apr 2017 20:53:07 +0000
+
 notify-osd (0.9.35+16.04.20160415-0ubuntu1) xenial; urgency=medium
 
   * Stack: allow to replace a notification when the replace_id has been
