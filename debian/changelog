@@ -1,3 +1,11 @@
+notify-osd (0.9.35+16.04.20160415-0ubuntu3) cosmic; urgency=medium
+
+  * debian/tests/upstream: Run tests under dbus-run-session; nothing
+    guarantees that a D-Bus session bus will be running and notify-osd needs
+    it.
+
+ -- Iain Lane <iain@orangesquash.org.uk>  Tue, 04 Sep 2018 15:16:13 +0100
+
 notify-osd (0.9.35+16.04.20160415-0ubuntu2) artful; urgency=medium
 
   * No-change rebuild to pick up -fPIE compiler default in static
