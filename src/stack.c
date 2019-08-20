@@ -760,6 +760,14 @@ stack_notify_handler (Stack*                 self,
 			else
 				g_warning ("image_path hint is not a string\n");
 		}
+		else if ((data = (GValue*) g_hash_table_lookup (hints, "image-path")))
+		{
+			g_debug("Using image-path hint\n");
+			if ((data && G_VALUE_HOLDS_STRING (data)))
+				bubble_set_icon (bubble, g_value_get_string(data));
+			else
+				g_warning ("image-path hint is not a string\n");
+		}
 		else if (icon && *icon != '\0')
 		{
 			g_debug("Using icon parameter\n");
