@@ -1,3 +1,11 @@
+Custom notify-osd with leolik's patches and a few changes.
+https://launchpad.net/~leolik/+archive/ubuntu/leolik
+
+An extra config option 'ignore-session-idle-inhibited' allows notify-osd to
+ignore org.gnome.SessionManager.IsInhibited() returning true.
+
+-- Original README --
+
 The Desktop Notifications framework provides a standard way of doing passive
 pop-up notifications on the Linux desktop. These are designed to notify the
 user of something without interrupting their work with a dialog box that they
