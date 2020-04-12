@@ -80,6 +80,7 @@ extern float DEFAULT_GAUGE_SIZE;
 extern gboolean BUBBLE_PREVENT_FADE;
 extern gboolean BUBBLE_CLOSE_ON_CLICK;
 extern gboolean BUBBLE_AS_DESKTOP_BG;
+extern gboolean IGNORE_SESSION_IDLE_INHIBITED;
 
 void parse_color(unsigned int c, float* r, float* g, float* b) 
 {
@@ -237,6 +238,10 @@ void load_settings(void)
         } else if (!strcmp(key, "bubble-as-desktop-bg") &&
                    sscanf(value, "%d", &ivalue) ) {
             BUBBLE_AS_DESKTOP_BG = ivalue;
+
+        } else if (!strcmp(key, "ignore-session-idle-inhibited") &&
+                   sscanf(value, "%d", &ivalue) ) {
+            IGNORE_SESSION_IDLE_INHIBITED = ivalue;
 
         }
         

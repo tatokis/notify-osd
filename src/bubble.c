@@ -169,6 +169,7 @@ float BUBBLE_BG_COLOR_A  = 0.9f;
 gboolean BUBBLE_PREVENT_FADE   = TRUE;
 gboolean BUBBLE_CLOSE_ON_CLICK = FALSE;
 gboolean BUBBLE_AS_DESKTOP_BG = FALSE;
+gboolean IGNORE_SESSION_IDLE_INHIBITED = FALSE;
 
 //-- private functions ---------------------------------------------------------
 

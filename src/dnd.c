@@ -46,6 +46,7 @@
 
 static DBusGProxy *gsmgr = NULL;
 static DBusGProxy *gscrsvr = NULL;
+extern IGNORE_SESSION_IDLE_INHIBITED;
 
 gboolean
 dnd_is_xscreensaver_active ()
@@ -116,6 +117,9 @@ get_gnomesession_proxy (void)
 gboolean
 dnd_is_idle_inhibited ()
 {
+    if(IGNORE_SESSION_IDLE_INHIBITED)
+        return FALSE;
+
 	GError  *error = NULL;
 	gboolean inhibited = FALSE;
 	guint idle = 8; // 8: Inhibit the session being marked as idle
