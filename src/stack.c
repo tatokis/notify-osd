@@ -612,7 +612,7 @@ stack_notify_handler (Stack*                 self,
 	// see if pathological actions or timeouts are used by an app issuing a
 	// notification
 	turn_into_dialog = dialog_check_actions_and_timeout (actions, timeout);
-	if (turn_into_dialog)
+	if (turn_into_dialog && g_strcmp0(app_name, "Waterfox"))
 	{
 		// TODO: apport_report (app_name, summary, actions, timeout);
 		gchar* sender = dbus_g_method_get_sender (context);
@@ -877,7 +877,7 @@ gboolean
 stack_get_capabilities (Stack*   self,
 			gchar*** out_caps)
 {
-	*out_caps = g_malloc0 (13 * sizeof(char *));
+	*out_caps = g_malloc0 (14 * sizeof(char *));
 
 	(*out_caps)[0]  = g_strdup ("body");
 	(*out_caps)[1]  = g_strdup ("body-markup");
@@ -895,8 +895,9 @@ stack_get_capabilities (Stack*   self,
 	(*out_caps)[9]  = g_strdup ("append");
 	(*out_caps)[10] = g_strdup ("private-icon-only");
 	(*out_caps)[11] = g_strdup ("truncation");
+	(*out_caps)[12] = g_strdup ("actions");
 
-	(*out_caps)[12] = NULL;
+	(*out_caps)[13] = NULL;
 
 	return TRUE;
 }
