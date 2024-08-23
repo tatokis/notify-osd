@@ -78,8 +78,8 @@ bubble_window_get_accessible (GtkWidget *widget)
     {
       AtkObjectFactory *factory = NULL;
       AtkRegistry *registry = NULL;
-      GType derived_type = NULL;
-      GType derived_atk_type = NULL;
+      GType derived_type = G_TYPE_NONE;
+      GType derived_atk_type = G_TYPE_NONE;
 
       /*
        * Figure out whether accessibility is enabled by looking at the
