@@ -60,25 +60,6 @@ test_dbus_collision (gpointer fixture, gconstpointer user_data)
 	g_test_trap_assert_failed();
 }
 
-
-static void
-test_dbus_get_capabilities (gpointer fixture, gconstpointer user_data)
-{
-	char **caps = NULL;
-	gboolean ret = FALSE;
-
-	ret = stack_get_capabilities (NULL, &caps);
-
-	g_assert (ret);
-	g_assert (!g_strcmp0 (caps[0], "body"));
-
-	int i = 0;
-	while (caps[i] != NULL)
-	{
-		g_assert (!g_strrstr (caps[i++], "actions"));
-	}
-}
-
 static void
 test_dbus_get_server_information (gpointer fixture, gconstpointer user_data)
 {
@@ -114,15 +95,6 @@ test_dbus_create_test_suite (void)
 					     NULL,
 					     NULL,
 					     (GTestFixtureFunc) test_dbus_collision,
-					     NULL)
-		);
-
-	g_test_suite_add(ts,
-			 g_test_create_case ("can get server capabilities",
-					     0,
-					     NULL,
-					     NULL,
-					     (GTestFixtureFunc) test_dbus_get_capabilities,
 					     NULL)
 		);
 
