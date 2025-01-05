@@ -10,5 +10,10 @@
       <summary>Gravity</summary>
       <description>Position of notifications on screen. Supported values are 1 (top-right) and 2 (vert. centered on the right).</description>
     </key>
+    <key name="action-ignore" type="as">
+      <default>['nm-applet']</default>
+      <summary>Action Ignore List</summary>
+      <description>List of application binaries to advertise support for actions and ignore them.</description>
+    </key>
   </schema>
 </schemalist>

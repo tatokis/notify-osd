@@ -115,7 +115,7 @@ stack_close_notification_handler (Stack*   self,
 
 gboolean
 stack_get_capabilities (Stack*   self,
-			gchar*** out_caps);
+			DBusGMethodInvocation* context);
 
 gboolean
 stack_get_server_information (Stack*  self,

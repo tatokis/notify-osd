@@ -261,6 +261,9 @@ defaults_refresh_bg_property (Defaults *self);
 void
 defaults_refresh_screen_dimension_properties (Defaults *self);
 
+GStrv
+defaults_get_fake_action_ignore_list (Defaults *self);
+
 void
 defaults_get_top_corner (Defaults *self, GdkScreen **screen, gint *x, gint *y);
 

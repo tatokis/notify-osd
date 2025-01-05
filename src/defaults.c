@@ -144,6 +144,7 @@ float DEFAULT_ON_SCREEN_TIMEOUT  = 10000;
 #define NOTIFY_OSD_SCHEMA            "com.canonical.notify-osd"
 #define GSETTINGS_GRAVITY_KEY        "gravity"
 #define GSETTINGS_MULTIHEAD_MODE_KEY "multihead-mode"
+#define GSETTINGS_IGNORE_LIST        "action-ignore"
 
 /* gnome settings */
 #define GNOME_DESKTOP_SCHEMA         "org.gnome.desktop.interface"
@@ -1854,6 +1855,13 @@ defaults_get_screen_dpi (Defaults* self)
 	g_object_get (self, "screen-dpi", &screen_dpi, NULL);
 
 	return screen_dpi;
+}
+
+GStrv
+defaults_get_fake_action_ignore_list (Defaults *self)
+{
+	return g_settings_get_strv (self->nosd_settings,
+					GSETTINGS_IGNORE_LIST);
 }
 
 static gboolean

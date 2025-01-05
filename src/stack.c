@@ -571,6 +571,57 @@ _arm_forced_quit (gpointer data)
 	return TRUE;
 }
 
+static gboolean
+is_process_in_action_ignore_list (Stack* self,
+            DBusGMethodInvocation* context)
+{
+	guint pid;
+	g_autoptr(GError) error = NULL;
+
+	g_autofree gchar* sender = dbus_g_method_get_sender (context);
+	DBusGConnection* connection = dbus_get_connection ();
+	DBusGProxy* proxy = dbus_g_proxy_new_for_name(connection,
+				"org.freedesktop.DBus",
+				"/org/freedesktop/DBus",
+				"org.freedesktop.DBus");
+
+	if (proxy == NULL)
+		return FALSE;
+	dbus_g_proxy_call_with_timeout (proxy,
+		"GetConnectionUnixProcessID",
+		1000,
+		&error,
+		G_TYPE_STRING,
+		sender,
+		G_TYPE_INVALID,
+		G_TYPE_UINT,
+		&pid,
+		G_TYPE_INVALID);
+	g_clear_object (&proxy);
+
+	if(error != NULL)
+		return FALSE;
+
+	// g_build_filename ???
+	g_autofree gchar* exe_link = g_strdup_printf ("/proc/%u/exe", pid);
+	g_autofree gchar* exe_path = g_file_read_link (exe_link, &error);
+	// g_filename_to_utf8 ???
+	if(error != NULL)
+		return FALSE;
+
+	g_autofree gchar* basename = g_path_get_basename(exe_path);
+	g_auto(GStrv) app_list = defaults_get_fake_action_ignore_list (self->defaults);
+	if (app_list == NULL)
+		return FALSE;
+
+	for (gint i = 0; app_list[i]; i++) {
+		if(!g_strcmp0(basename, app_list[i]))
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 gboolean
 stack_notify_handler (Stack*                 self,
 		      const gchar*           app_name,
@@ -612,7 +663,7 @@ stack_notify_handler (Stack*                 self,
 	// see if pathological actions or timeouts are used by an app issuing a
 	// notification
 	turn_into_dialog = dialog_check_actions_and_timeout (actions, timeout);
-	if (turn_into_dialog)
+	if (turn_into_dialog && !is_process_in_action_ignore_list (self, context))
 	{
 		// TODO: apport_report (app_name, summary, actions, timeout);
 		gchar* sender = dbus_g_method_get_sender (context);
@@ -875,28 +926,35 @@ stack_close_notification_handler (Stack*   self,
 
 gboolean
 stack_get_capabilities (Stack*   self,
-			gchar*** out_caps)
+			DBusGMethodInvocation* context)
 {
-	*out_caps = g_malloc0 (13 * sizeof(char *));
+	gchar** out_caps = g_malloc0 (14 * sizeof(char *));
 
-	(*out_caps)[0]  = g_strdup ("body");
-	(*out_caps)[1]  = g_strdup ("body-markup");
-	(*out_caps)[2]  = g_strdup ("icon-static");
-	(*out_caps)[3]  = g_strdup ("image/svg+xml");
-	(*out_caps)[4]  = g_strdup ("x-canonical-private-synchronous");
-	(*out_caps)[5]  = g_strdup ("x-canonical-append");
-	(*out_caps)[6]  = g_strdup ("x-canonical-private-icon-only");
-	(*out_caps)[7]  = g_strdup ("x-canonical-truncation");
+	out_caps[0]  = g_strdup ("body");
+	out_caps[1]  = g_strdup ("body-markup");
+	out_caps[2]  = g_strdup ("icon-static");
+	out_caps[3]  = g_strdup ("image/svg+xml");
+	out_caps[4]  = g_strdup ("x-canonical-private-synchronous");
+	out_caps[5]  = g_strdup ("x-canonical-append");
+	out_caps[6]  = g_strdup ("x-canonical-private-icon-only");
+	out_caps[7]  = g_strdup ("x-canonical-truncation");
 
 	/* a temp. compatibility-check for the transition time to allow apps a
 	** grace-period to catch up with the capability- and hint-name-changes
 	** introduced with notify-osd rev. 224 */
-	(*out_caps)[8]  = g_strdup ("private-synchronous");
-	(*out_caps)[9]  = g_strdup ("append");
-	(*out_caps)[10] = g_strdup ("private-icon-only");
-	(*out_caps)[11] = g_strdup ("truncation");
+	out_caps[8]  = g_strdup ("private-synchronous");
+	out_caps[9]  = g_strdup ("append");
+	out_caps[10] = g_strdup ("private-icon-only");
+	out_caps[11] = g_strdup ("truncation");
 
-	(*out_caps)[12] = NULL;
+	// Must keep last
+	out_caps[12] = g_strdup ("actions");
+	if(!is_process_in_action_ignore_list (self, context))
+		out_caps[12] = NULL;
+
+	out_caps[13] = NULL;
+
+	dbus_g_method_return(context, out_caps);
 
 	return TRUE;
 }

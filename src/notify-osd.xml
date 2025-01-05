@@ -25,6 +25,7 @@
 
     <method name="GetCapabilities">
       <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="stack_get_capabilities"/>
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
       <arg type="as" name="return_caps" direction="out"/>
     </method>
 
