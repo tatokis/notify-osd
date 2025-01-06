@@ -78,12 +78,12 @@ enum
 	PROP_SCREEN_DPI,
 	PROP_GRAVITY,
 	PROP_CLOSE_ON_CLICK,
+	PROP_FADE_ON_HOVER,
 };
 
 enum
 {
 	VALUE_CHANGED,
-	GRAVITY_CHANGED,
 	LAST_SIGNAL
 };
 
@@ -134,6 +134,7 @@ enum
 #define DEFAULT_SCREEN_DPI           96.0f
 #define DEFAULT_GRAVITY              GRAVITY_NORTH_EAST
 #define DEFAULT_CLOSE_ON_CLICK       TRUE
+#define DEFAULT_FADE_ON_HOVER        TRUE
 
 /* these values are interpreted as milliseconds-measurements and do comply to
  * the visual guide for jaunty-notifications */
@@ -146,6 +147,7 @@ enum
 #define GSETTINGS_GRAVITY_KEY        "gravity"
 #define GSETTINGS_MULTIHEAD_MODE_KEY "multihead-mode"
 #define GSETTINGS_CLOSE_ON_CLICK_KEY "close-on-click"
+#define GSETTINGS_FADE_ON_HOVER_KEY  "fade-on-hover"
 
 /* gnome settings */
 #define GNOME_DESKTOP_SCHEMA         "org.gnome.desktop.interface"
@@ -227,23 +229,18 @@ _get_font_size_dpi (Defaults* self)
 			 defaults_get_text_body_size (self));
 }
 
-static void
-_get_gravity (Defaults* self)
+static gboolean
+_get_gravity (GValue* value,
+              GVariant* variant,
+              gpointer user_data)
 {
-	Gravity gravity = DEFAULT_GRAVITY;
+    gint32 gravity = g_variant_get_int32 (variant);
+    if (!(gravity > GRAVITY_NONE && gravity < GRAVITY_MAX))
+        gravity = DEFAULT_GRAVITY;
 
-	if (!IS_DEFAULTS (self))
-		return;
+    g_value_set_int (value, (gint)gravity);
 
-	// grab current gravity-setting for notify-osd from GSettings
-	gravity = g_settings_get_int (self->nosd_settings, GSETTINGS_GRAVITY_KEY);
-
-	// protect against out-of-bounds values for gravity
-	if (gravity != GRAVITY_EAST && gravity != GRAVITY_NORTH_EAST)
-		gravity = DEFAULT_GRAVITY;
-
-	// update stored DPI-value
-	g_object_set (self, "gravity", gravity, NULL);
+    return TRUE;
 }
 
 static void
@@ -264,26 +261,6 @@ _font_changed (GSettings* settings,
 	_get_font_size_dpi (defaults);
 
 	g_signal_emit (defaults, g_defaults_signals[VALUE_CHANGED], 0);
-}
-
-static void
-_gravity_changed (GSettings* settings,
-				  gchar*     key,
-				  gpointer   data)
-{
-	Defaults* defaults;
-
-	if (!data)
-		return;
-
-	defaults = (Defaults*) data;
-	if (!IS_DEFAULTS (defaults))
-		return;
-
-    // grab gravity setting for notify-osd from gconf
-	_get_gravity (defaults);
-
-	g_signal_emit (defaults, g_defaults_signals[GRAVITY_CHANGED], 0);
 }
 
 void
@@ -351,7 +328,6 @@ defaults_constructed (GObject* gobject)
 
 	/* grab system-wide font-face/size and DPI */
 	_get_font_size_dpi (self);
-	_get_gravity (self);
 
 	/* correct the default min. bubble-height, according to the icon-size */
 	g_object_get (self,
@@ -385,10 +361,26 @@ defaults_constructed (GObject* gobject)
 			      NULL);
 	}
 
+	g_settings_bind_with_mapping (self->nosd_settings,
+	                              GSETTINGS_GRAVITY_KEY,
+	                              self,
+	                              "gravity",
+	                              G_SETTINGS_BIND_DEFAULT,
+	                              _get_gravity,
+	                              NULL,
+	                              NULL,
+	                              NULL);
+
 	g_settings_bind (self->nosd_settings,
 	                 GSETTINGS_CLOSE_ON_CLICK_KEY,
 	                 self,
 	                 "close-on-click",
+	                 G_SETTINGS_BIND_DEFAULT);
+
+	g_settings_bind (self->nosd_settings,
+	                 GSETTINGS_FADE_ON_HOVER_KEY,
+	                 self,
+	                 "fade-on-hover",
 	                 G_SETTINGS_BIND_DEFAULT);
 
 	/* FIXME: calling this here causes a segfault */
@@ -481,11 +473,6 @@ defaults_init (Defaults* self)
 			  "notify::gtk-xft-dpi",
 			  G_CALLBACK (_font_changed),
 			  self);
-
-	g_signal_connect (self->nosd_settings,
-	                  "changed::gravity",
-	                  G_CALLBACK (_gravity_changed),
-	                  self);
 
 	// use fixed slot-allocation for async. and sync. bubbles
 	self->slot_allocation = SLOT_ALLOCATION_FIXED;
@@ -645,6 +632,10 @@ defaults_get_property (GObject*    gobject,
 
 	    case PROP_CLOSE_ON_CLICK:
 		    g_value_set_boolean (value, defaults->close_on_click);
+		break;
+
+	    case PROP_FADE_ON_HOVER:
+		    g_value_set_boolean (value, defaults->fade_on_hover);
 		break;
 
 		default :
@@ -847,6 +838,10 @@ defaults_set_property (GObject*      gobject,
 		    defaults->close_on_click = g_value_get_boolean (value);
 		break;
 
+	    case PROP_FADE_ON_HOVER:
+		    defaults->fade_on_hover = g_value_get_boolean (value);
+		break;
+
 		default :
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (gobject, prop, spec);
 		break;
@@ -892,6 +887,7 @@ defaults_class_init (DefaultsClass* klass)
 	GParamSpec*   property_screen_dpi;
 	GParamSpec*   property_gravity;
 	GParamSpec*   property_close_on_click;
+	GParamSpec*   property_fade_on_hover;
 
 	gobject_class->constructed  = defaults_constructed;
 	gobject_class->dispose      = defaults_dispose;
@@ -904,17 +900,6 @@ defaults_class_init (DefaultsClass* klass)
 		G_OBJECT_CLASS_TYPE (gobject_class),
 		G_SIGNAL_RUN_LAST,
 		G_STRUCT_OFFSET (DefaultsClass, value_changed),
-		NULL,
-		NULL,
-		g_cclosure_marshal_VOID__VOID,
-		G_TYPE_NONE,
-		0);
-
-	g_defaults_signals[GRAVITY_CHANGED] = g_signal_new (
-		"gravity-changed",
-		G_OBJECT_CLASS_TYPE (gobject_class),
-		G_SIGNAL_RUN_LAST,
-		G_STRUCT_OFFSET (DefaultsClass, gravity_changed),
 		NULL,
 		NULL,
 		g_cclosure_marshal_VOID__VOID,
@@ -1379,6 +1364,17 @@ defaults_class_init (DefaultsClass* klass)
 	                 PROP_CLOSE_ON_CLICK,
 	                 property_close_on_click);
 
+	property_fade_on_hover = g_param_spec_boolean (
+	            "fade-on-hover",
+	            "fade-on-hover",
+	            "Fade notification bubble when cursor is hovering over it",
+	            DEFAULT_FADE_ON_HOVER,
+	            G_PARAM_CONSTRUCT |
+	            G_PARAM_READWRITE |
+	            G_PARAM_STATIC_STRINGS);
+	g_object_class_install_property (gobject_class,
+	                 PROP_FADE_ON_HOVER,
+	                 property_fade_on_hover);
 }
 
 /*-- public API --------------------------------------------------------------*/
@@ -2038,4 +2034,17 @@ defaults_get_close_on_click (Defaults* self)
 	g_object_get (self, "close-on-click", &close_on_click, NULL);
 
 	return close_on_click;
+}
+
+gboolean
+defaults_get_fade_on_hover (Defaults* self)
+{
+	if (!self || !IS_DEFAULTS (self))
+		return DEFAULT_FADE_ON_HOVER;
+
+	gboolean fade_on_hover;
+
+	g_object_get (self, "fade-on-hover", &fade_on_hover, NULL);
+
+	return fade_on_hover;
 }

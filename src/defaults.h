@@ -59,7 +59,8 @@ typedef enum
 {
         GRAVITY_NONE = 0,
         GRAVITY_NORTH_EAST, // top-right of screen
-        GRAVITY_EAST        // vertically centered at right of screen
+        GRAVITY_EAST,       // vertically centered at right of screen
+        GRAVITY_MAX
 } Gravity;
 
 typedef enum
@@ -114,6 +115,7 @@ struct _Defaults
 	Gravity        gravity;
 	SlotAllocation slot_allocation;
 	gboolean       close_on_click;
+	gboolean       fade_on_hover;
 };
 
 /* class structure */
@@ -266,6 +268,9 @@ defaults_get_slot_allocation (Defaults *self);
 
 gboolean
 defaults_get_close_on_click (Defaults* self);
+
+gboolean
+defaults_get_fade_on_hover (Defaults* self);
 
 G_END_DECLS
 

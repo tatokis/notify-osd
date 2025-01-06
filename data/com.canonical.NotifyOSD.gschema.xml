@@ -15,5 +15,10 @@
       <summary>Close on click</summary>
       <description>Close notification by clicking on it.</description>
     </key>
+    <key name="fade-on-hover" type="b">
+      <default>true</default>
+      <summary>Fade bubble on hover</summary>
+      <description>Fade notification bubble when cursor is hovering over it.</description>
+    </key>
   </schema>
 </schemalist>

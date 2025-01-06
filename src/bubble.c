@@ -1763,9 +1763,9 @@ bubble_draw (GtkWidget* widget,
 	cairo_paint (cr);
 	cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 
-	if (priv->prevent_fade || !priv->composited)
+	if (!defaults_get_fade_on_hover (d) || priv->prevent_fade || !priv->composited)
 	{
-	        // render drop-shadow and bubble-background
+		// render drop-shadow and bubble-background
 		_render_background (bubble, cr, 1.0f, 0.0f);
 
 		// render content of bubble depending on layout
@@ -1773,7 +1773,7 @@ bubble_draw (GtkWidget* widget,
 	}
 	else
 	{
-	        // render drop-shadow and bubble-background
+		// render drop-shadow and bubble-background
 		_render_background (bubble,
 		                    cr,
 		                    priv->distance,
@@ -1842,7 +1842,7 @@ redraw_handler (Bubble* bubble)
 
 	if (priv->alpha == NULL)
 	{
-		if (priv->distance < 1.0f && !priv->prevent_fade)
+		if (priv->distance < 1.0f && defaults_get_fade_on_hover (bubble->defaults) && !priv->prevent_fade)
 		{
 			gtk_widget_set_opacity (priv->widget,
 			                        WINDOW_MIN_OPACITY +
