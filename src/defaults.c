@@ -1343,7 +1343,7 @@ defaults_class_init (DefaultsClass* klass)
 				"gravity",
 				"Positional hint for placing bubbles",
 				0,
-				2,
+				6,
 				DEFAULT_GRAVITY,
 				G_PARAM_CONSTRUCT |
 				G_PARAM_READWRITE |
@@ -1403,6 +1403,15 @@ defaults_get_desktop_height (Defaults* self)
 		return 0;
 
 	return self->desktop_height;
+}
+
+gint
+defaults_get_desktop_left (Defaults* self)
+{
+	if (!self || !IS_DEFAULTS (self))
+		return 0;
+
+	return self->desktop_left;
 }
 
 gdouble
@@ -1981,6 +1990,7 @@ defaults_get_top_corner (Defaults *self, GdkScreen **screen, gint *x, gint *y)
 
 	self->desktop_width = rect.width;
 	self->desktop_height = rect.height;
+	self->desktop_left = rect.x;
 
 	*y   = rect.y;
 	*y  += EM2PIXELS (defaults_get_bubble_vert_gap (self), self)
