@@ -44,6 +44,7 @@
 G_DEFINE_TYPE (Stack, stack, G_TYPE_OBJECT);
 
 #define FORCED_SHUTDOWN_THRESHOLD 500
+#define NOTIFY_EXPIRES_DEFAULT -1
 
 /* fwd declaration */
 void close_handler (GObject* n, Stack*  stack);
@@ -673,6 +674,14 @@ stack_notify_handler (Stack*                 self,
 		bubble_set_title (bubble, summary);
 	if (body)
 		bubble_set_message_body (bubble, body);
+
+	if (timeout == NOTIFY_EXPIRES_DEFAULT) {
+		bubble_set_timeout (bubble,
+		                    defaults_get_on_screen_timeout (self->defaults));
+	}
+	else {
+		bubble_set_timeout (bubble, timeout);
+	}
 
 	if (new_bubble && bubble_is_append_allowed(bubble)) {
 		app_bubble = find_bubble_for_append(self, bubble);
