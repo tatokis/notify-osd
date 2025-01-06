@@ -1652,7 +1652,7 @@ screen_changed_handler (GtkWindow* window,
 
 static
 void
-update_input_shape (GtkWidget* window)
+update_input_shape (Bubble* bubble, GtkWidget* window)
 {
 	cairo_region_t*             region = NULL;
 	const cairo_rectangle_int_t rect   = {0, 0, 1, 1};
@@ -1661,14 +1661,22 @@ update_input_shape (GtkWidget* window)
 	if (!window)
 		return;
 
-	// set an 1x1 input-region to allow click-through 
-	region = cairo_region_create_rectangle (&rect);
-	if (cairo_region_status (region) == CAIRO_STATUS_SUCCESS)
+	if (defaults_get_close_on_click(bubble->defaults))
 	{
-		gtk_widget_input_shape_combine_region (window, NULL);
-		gtk_widget_input_shape_combine_region (window, region);
+		GdkWindow *window_ = gtk_widget_get_window (window);
+		gdk_window_set_events (window_, gdk_window_get_events (window_) | GDK_BUTTON_PRESS);
 	}
-	cairo_region_destroy (region);
+	else
+	{
+		// set an 1x1 input-region to allow click-through
+		region = cairo_region_create_rectangle (&rect);
+		if (cairo_region_status (region) == CAIRO_STATUS_SUCCESS)
+		{
+			gtk_widget_input_shape_combine_region (window, NULL);
+			gtk_widget_input_shape_combine_region (window, region);
+		}
+		cairo_region_destroy (region);
+	}
 }
 
 static void
@@ -1783,6 +1791,31 @@ bubble_draw (GtkWidget* widget,
 		      EM2PIXELS (get_shadow_size (bubble), d));
 
 	return TRUE;
+}
+
+static gboolean
+button_press_event_handler (GtkWidget* window G_GNUC_UNUSED,
+                            GdkEventButton* event,
+                            Bubble* bubble)
+{
+	BubblePrivate* priv = bubble->priv;
+
+	if (defaults_get_close_on_click (bubble->defaults) &&
+	        priv->mouse_over &&
+	        event->button == 1)
+	{
+		bubble_hide (bubble);
+
+		dbus_send_close_signal (bubble_get_sender (bubble),
+		                        bubble_get_id (bubble),
+		                        1);
+
+		g_signal_emit (bubble, g_bubble_signals[TIMED_OUT], 0);
+
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 static gboolean
@@ -2205,6 +2238,11 @@ bubble_new (Defaults* defaults)
 	                  G_CALLBACK (bubble_draw),
 	                  this);
 
+	g_signal_connect (window,
+	                  "button-press-event",
+	                  G_CALLBACK (button_press_event_handler),
+	                  this);
+
 	// "clear" input-mask, set title/icon/attributes
 	gtk_widget_set_app_paintable (window, TRUE);
 	gtk_window_set_title (GTK_WINDOW (window), "notify-osd");
@@ -2247,7 +2285,7 @@ bubble_new (Defaults* defaults)
 	this->priv->tile_indicator             = NULL;
 	this->priv->prevent_fade               = FALSE;
 
-	update_input_shape (window);
+	update_input_shape (this, window);
 
 	return this;
 }

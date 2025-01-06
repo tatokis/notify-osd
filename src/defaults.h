@@ -113,6 +113,7 @@ struct _Defaults
 	gdouble        screen_dpi;
 	Gravity        gravity;
 	SlotAllocation slot_allocation;
+	gboolean       close_on_click;
 };
 
 /* class structure */
@@ -262,6 +263,9 @@ defaults_get_gravity (Defaults *self);
 
 SlotAllocation
 defaults_get_slot_allocation (Defaults *self);
+
+gboolean
+defaults_get_close_on_click (Defaults* self);
 
 G_END_DECLS
 

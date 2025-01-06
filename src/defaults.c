@@ -76,7 +76,8 @@ enum
 	PROP_PIXELS_PER_EM,
 	PROP_SYSTEM_FONT_SIZE,
 	PROP_SCREEN_DPI,
-	PROP_GRAVITY
+	PROP_GRAVITY,
+	PROP_CLOSE_ON_CLICK,
 };
 
 enum
@@ -132,6 +133,7 @@ enum
 #define DEFAULT_SYSTEM_FONT_SIZE     10.0f
 #define DEFAULT_SCREEN_DPI           96.0f
 #define DEFAULT_GRAVITY              GRAVITY_NORTH_EAST
+#define DEFAULT_CLOSE_ON_CLICK       TRUE
 
 /* these values are interpreted as milliseconds-measurements and do comply to
  * the visual guide for jaunty-notifications */
@@ -143,6 +145,7 @@ enum
 #define NOTIFY_OSD_SCHEMA            "com.canonical.notify-osd"
 #define GSETTINGS_GRAVITY_KEY        "gravity"
 #define GSETTINGS_MULTIHEAD_MODE_KEY "multihead-mode"
+#define GSETTINGS_CLOSE_ON_CLICK_KEY "close-on-click"
 
 /* gnome settings */
 #define GNOME_DESKTOP_SCHEMA         "org.gnome.desktop.interface"
@@ -382,6 +385,12 @@ defaults_constructed (GObject* gobject)
 			      NULL);
 	}
 
+	g_settings_bind (self->nosd_settings,
+	                 GSETTINGS_CLOSE_ON_CLICK_KEY,
+	                 self,
+	                 "close-on-click",
+	                 G_SETTINGS_BIND_DEFAULT);
+
 	/* FIXME: calling this here causes a segfault */
 	/* chain up to the parent class */
 	/*G_OBJECT_CLASS (defaults_parent_class)->constructed (gobject);*/
@@ -474,9 +483,9 @@ defaults_init (Defaults* self)
 			  self);
 
 	g_signal_connect (self->nosd_settings,
-					  "changed",
-					  G_CALLBACK (_gravity_changed),
-					  self);
+	                  "changed::gravity",
+	                  G_CALLBACK (_gravity_changed),
+	                  self);
 
 	// use fixed slot-allocation for async. and sync. bubbles
 	self->slot_allocation = SLOT_ALLOCATION_FIXED;
@@ -632,6 +641,10 @@ defaults_get_property (GObject*    gobject,
 
 		case PROP_GRAVITY:
 			g_value_set_int (value, defaults->gravity);
+		break;
+
+	    case PROP_CLOSE_ON_CLICK:
+		    g_value_set_boolean (value, defaults->close_on_click);
 		break;
 
 		default :
@@ -830,6 +843,10 @@ defaults_set_property (GObject*      gobject,
 			defaults->gravity = g_value_get_int (value);
 		break;
 
+	    case PROP_CLOSE_ON_CLICK:
+		    defaults->close_on_click = g_value_get_boolean (value);
+		break;
+
 		default :
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (gobject, prop, spec);
 		break;
@@ -874,6 +891,7 @@ defaults_class_init (DefaultsClass* klass)
 	GParamSpec*   property_system_font_size;
 	GParamSpec*   property_screen_dpi;
 	GParamSpec*   property_gravity;
+	GParamSpec*   property_close_on_click;
 
 	gobject_class->constructed  = defaults_constructed;
 	gobject_class->dispose      = defaults_dispose;
@@ -1348,6 +1366,19 @@ defaults_class_init (DefaultsClass* klass)
 	g_object_class_install_property (gobject_class,
 					 PROP_GRAVITY,
 					 property_gravity);
+
+	property_close_on_click = g_param_spec_boolean (
+	            "close-on-click",
+	            "close-on-click",
+	            "Close notification when clicking on it",
+	            DEFAULT_CLOSE_ON_CLICK,
+	            G_PARAM_CONSTRUCT |
+	            G_PARAM_READWRITE |
+	            G_PARAM_STATIC_STRINGS);
+	g_object_class_install_property (gobject_class,
+	                 PROP_CLOSE_ON_CLICK,
+	                 property_close_on_click);
+
 }
 
 /*-- public API --------------------------------------------------------------*/
@@ -1994,4 +2025,17 @@ defaults_get_slot_allocation (Defaults *self)
 		return SLOT_ALLOCATION_NONE;
 
 	return self->slot_allocation;
+}
+
+gboolean
+defaults_get_close_on_click (Defaults* self)
+{
+	if (!self || !IS_DEFAULTS (self))
+		return DEFAULT_CLOSE_ON_CLICK;
+
+	gboolean close_on_click;
+
+	g_object_get (self, "close-on-click", &close_on_click, NULL);
+
+	return close_on_click;
 }
