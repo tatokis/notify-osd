@@ -121,6 +121,7 @@ struct _Defaults
 	SlotAllocation slot_allocation;
 	gboolean       close_on_click;
 	gboolean       fade_on_hover;
+	gboolean       ignore_session_idle_inhibited;
 };
 
 /* class structure */
@@ -276,6 +277,9 @@ defaults_get_close_on_click (Defaults* self);
 
 gboolean
 defaults_get_fade_on_hover (Defaults* self);
+
+gboolean
+defaults_get_ignore_session_idle_inhibited (Defaults* self);
 
 G_END_DECLS
 

@@ -25,5 +25,10 @@
       <summary>Application action ignore list</summary>
       <description>List of applications to advertise support for actions (buttons) to.</description>
     </key>
+    <key name="ignore-session-idle-inhibited" type="b">
+      <default>true</default>
+      <summary>Show notifications with system idle inhibited</summary>
+      <description>Show notifications even if an application is inhibiting system idle.</description>
+    </key>
   </schema>
 </schemalist>

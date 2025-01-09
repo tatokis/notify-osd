@@ -43,6 +43,7 @@
 #include <libwnck/libwnck.h>
 
 #include "dbus.h"
+#include "defaults.h"
 
 static DBusGProxy *gsmgr = NULL;
 static DBusGProxy *gscrsvr = NULL;
@@ -228,12 +229,13 @@ dnd_has_one_fullscreen_window (void)
 
 /* Tries to determine whether the user is in "do not disturb" mode */
 gboolean
-dnd_dont_disturb_user (void)
+dnd_dont_disturb_user (Defaults* defaults)
 {
 	return (dnd_is_online_presence_dnd()
 		|| dnd_is_xscreensaver_active()
 		|| dnd_is_screensaver_active()
-		|| dnd_is_idle_inhibited()
+		|| (!defaults_get_ignore_session_idle_inhibited(defaults)
+	         && dnd_is_idle_inhibited())
 		|| dnd_has_one_fullscreen_window()
 		);
 }

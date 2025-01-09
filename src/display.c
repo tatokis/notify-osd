@@ -297,7 +297,7 @@ stack_layout (Stack* self)
 		   notifications waiting in the queue */
 		return FALSE;
 
-	if (dnd_dont_disturb_user ()
+	if (dnd_dont_disturb_user (self->defaults)
 	    && (! bubble_is_urgent (bubble)))
 	{
 		guint id = bubble_get_id (bubble);

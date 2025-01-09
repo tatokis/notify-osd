@@ -79,6 +79,7 @@ enum
 	PROP_GRAVITY,
 	PROP_CLOSE_ON_CLICK,
 	PROP_FADE_ON_HOVER,
+	PROP_IGNORE_SESSION_IDLE_INHIBITED,
 };
 
 enum
@@ -135,6 +136,7 @@ enum
 #define DEFAULT_GRAVITY              GRAVITY_NORTH_EAST
 #define DEFAULT_CLOSE_ON_CLICK       TRUE
 #define DEFAULT_FADE_ON_HOVER        TRUE
+#define DEFAULT_IGNORE_SESSION_IDLE_INHIBITED TRUE
 
 /* these values are interpreted as milliseconds-measurements and do comply to
  * the visual guide for jaunty-notifications */
@@ -149,6 +151,7 @@ enum
 #define GSETTINGS_CLOSE_ON_CLICK_KEY "close-on-click"
 #define GSETTINGS_FADE_ON_HOVER_KEY  "fade-on-hover"
 #define GSETTINGS_IGNORE_LIST_KEY    "action-ignore"
+#define GSETTINGS_IGNORE_SESSION_IDLE_INHIBITED_KEY "ignore-session-idle-inhibited"
 
 /* gnome settings */
 #define GNOME_DESKTOP_SCHEMA         "org.gnome.desktop.interface"
@@ -382,6 +385,12 @@ defaults_constructed (GObject* gobject)
 	                 GSETTINGS_FADE_ON_HOVER_KEY,
 	                 self,
 	                 "fade-on-hover",
+	                 G_SETTINGS_BIND_DEFAULT);
+
+	g_settings_bind (self->nosd_settings,
+	                 GSETTINGS_IGNORE_SESSION_IDLE_INHIBITED_KEY,
+	                 self,
+	                 "ignore-session-idle-inhibited",
 	                 G_SETTINGS_BIND_DEFAULT);
 
 	/* FIXME: calling this here causes a segfault */
@@ -639,6 +648,10 @@ defaults_get_property (GObject*    gobject,
 		    g_value_set_boolean (value, defaults->fade_on_hover);
 		break;
 
+	    case PROP_IGNORE_SESSION_IDLE_INHIBITED:
+		    g_value_set_boolean (value, defaults->ignore_session_idle_inhibited);
+		break;
+
 		default :
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (gobject, prop, spec);
 		break;
@@ -843,6 +856,10 @@ defaults_set_property (GObject*      gobject,
 		    defaults->fade_on_hover = g_value_get_boolean (value);
 		break;
 
+	    case PROP_IGNORE_SESSION_IDLE_INHIBITED:
+		    defaults->ignore_session_idle_inhibited = g_value_get_boolean (value);
+		break;
+
 		default :
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (gobject, prop, spec);
 		break;
@@ -889,6 +906,7 @@ defaults_class_init (DefaultsClass* klass)
 	GParamSpec*   property_gravity;
 	GParamSpec*   property_close_on_click;
 	GParamSpec*   property_fade_on_hover;
+	GParamSpec*   property_ignore_session_idle_inhibited;
 
 	gobject_class->constructed  = defaults_constructed;
 	gobject_class->dispose      = defaults_dispose;
@@ -1376,6 +1394,18 @@ defaults_class_init (DefaultsClass* klass)
 	g_object_class_install_property (gobject_class,
 	                 PROP_FADE_ON_HOVER,
 	                 property_fade_on_hover);
+
+	property_ignore_session_idle_inhibited = g_param_spec_boolean (
+	            "ignore-session-idle-inhibited",
+	            "ignore-session-idle-inhibited",
+	            "Show notifications even if an application is inhibiting system idle.",
+	            DEFAULT_IGNORE_SESSION_IDLE_INHIBITED,
+	            G_PARAM_CONSTRUCT |
+	            G_PARAM_READWRITE |
+	            G_PARAM_STATIC_STRINGS);
+	g_object_class_install_property (gobject_class,
+	                 PROP_IGNORE_SESSION_IDLE_INHIBITED,
+	                 property_ignore_session_idle_inhibited);
 }
 
 /*-- public API --------------------------------------------------------------*/
@@ -2065,4 +2095,17 @@ defaults_get_fade_on_hover (Defaults* self)
 	g_object_get (self, "fade-on-hover", &fade_on_hover, NULL);
 
 	return fade_on_hover;
+}
+
+gboolean
+defaults_get_ignore_session_idle_inhibited (Defaults* self)
+{
+	if (!self || !IS_DEFAULTS (self))
+		return DEFAULT_IGNORE_SESSION_IDLE_INHIBITED;
+
+	gboolean ignore_session_idle_inhibited;
+
+	g_object_get (self, "ignore-session-idle-inhibited", &ignore_session_idle_inhibited, NULL);
+
+	return ignore_session_idle_inhibited;
 }

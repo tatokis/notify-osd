@@ -29,11 +29,13 @@
 #ifndef __DND_H
 #define __DNS_H
 
+#include "defaults.h"
+
 G_BEGIN_DECLS
 
 /* Tries to determine whether the user is in "do not disturb" mode */
 gboolean
-dnd_dont_disturb_user (void);
+dnd_dont_disturb_user (Defaults* defaults);
 
 gboolean
 dnd_is_xscreensaver_active (void);
