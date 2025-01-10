@@ -237,20 +237,6 @@ _get_font_size_dpi (Defaults* self)
 			 defaults_get_text_body_size (self));
 }
 
-static gboolean
-_get_gravity (GValue* value,
-              GVariant* variant,
-              gpointer user_data)
-{
-    gint32 gravity = g_variant_get_int32 (variant);
-    if (!(gravity > GRAVITY_NONE && gravity < GRAVITY_MAX))
-        gravity = DEFAULT_GRAVITY;
-
-    g_value_set_int (value, (gint)gravity);
-
-    return TRUE;
-}
-
 static void
 _font_changed (GSettings* settings,
 			   gchar*     key,
@@ -369,15 +355,11 @@ defaults_constructed (GObject* gobject)
 			      NULL);
 	}
 
-	g_settings_bind_with_mapping (self->nosd_settings,
-	                              GSETTINGS_GRAVITY_KEY,
-	                              self,
-	                              "gravity",
-	                              G_SETTINGS_BIND_DEFAULT,
-	                              _get_gravity,
-	                              NULL,
-	                              NULL,
-	                              NULL);
+	g_settings_bind (self->nosd_settings,
+	                 GSETTINGS_GRAVITY_KEY,
+	                 self,
+	                 "gravity",
+	                 G_SETTINGS_BIND_DEFAULT);
 
 	g_settings_bind (self->nosd_settings,
 	                 GSETTINGS_CLOSE_ON_CLICK_KEY,
@@ -644,7 +626,7 @@ defaults_get_property (GObject*    gobject,
 		break;
 
 		case PROP_GRAVITY:
-			g_value_set_int (value, defaults->gravity);
+			g_value_set_enum (value, defaults->gravity);
 		break;
 
 	    case PROP_CLOSE_ON_CLICK:
@@ -856,7 +838,7 @@ defaults_set_property (GObject*      gobject,
 		break;
 
 		case PROP_GRAVITY:
-			defaults->gravity = g_value_get_int (value);
+			defaults->gravity = g_value_get_enum (value);
 		break;
 
 	    case PROP_CLOSE_ON_CLICK:
@@ -1373,12 +1355,11 @@ defaults_class_init (DefaultsClass* klass)
 					 PROP_SCREEN_DPI,
 					 property_screen_dpi);
 
-	property_gravity = g_param_spec_int (
+	property_gravity = g_param_spec_enum (
 				"gravity",
 				"gravity",
 				"Positional hint for placing bubbles",
-				0,
-				6,
+				GRAVITY_TYPE_,
 				DEFAULT_GRAVITY,
 				G_PARAM_CONSTRUCT |
 				G_PARAM_READWRITE |

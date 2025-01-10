@@ -5,10 +5,10 @@
       <summary>Multihead position behaviour</summary>
       <description>Should the notification position follow the mouse-focus or not in multi-screen environments. Use values "dont-focus-follow" or "focus-follow".</description>
     </key>
-    <key name="gravity" type="i">
-      <default>1</default>
+    <key name="gravity" enum="com.canonical.NotifyOSD.Gravity">
+      <default>'north-east'</default>
       <summary>Gravity</summary>
-      <description>Position of notifications on screen. Supported values are 1 (top-right) and 2 (vert. centered on the right).</description>
+      <description>Position of notifications on screen.</description>
     </key>
     <key name="close-on-click" type="b">
       <default>true</default>
