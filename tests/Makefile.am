@@ -36,6 +36,7 @@ test_modules_SOURCES =						\
 	$(top_srcdir)/src/bubble-window-accessible-factory.c	\
 	$(top_srcdir)/src/log.c					\
 	$(top_srcdir)/src/timings.c				\
+	$(top_srcdir)/src/enum-types.c				\
 	$(EGG_MODULES)						\
 	test-modules-main.c					\
 	test-apport.c						\

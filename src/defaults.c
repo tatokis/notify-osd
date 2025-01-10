@@ -38,6 +38,7 @@
 
 #include "defaults.h"
 #include "util.h"
+#include "enum-types.h"
 
 G_DEFINE_TYPE (Defaults, defaults, G_TYPE_OBJECT);
 

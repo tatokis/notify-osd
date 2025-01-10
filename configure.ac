@@ -81,6 +81,12 @@ AC_CHECK_LIBM
 AC_SUBST(LIBM)
 
 #
+# glib-mkenums
+#
+
+PKG_CHECK_VAR([GLIB_MKENUMS], [glib-2.0], [glib_mkenums])
+
+#
 # checks for building C- or C#-examples
 #
 AC_DEFUN([CHECK_FOR_MONO_STUFF],

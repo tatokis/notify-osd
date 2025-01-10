@@ -57,21 +57,21 @@ typedef struct _DefaultsClass DefaultsClass;
 
 typedef enum
 {
-        GRAVITY_NONE = 0,
-        GRAVITY_NORTH_EAST, // top-right of screen
-        GRAVITY_EAST,       // vertically centered at right of screen
-        GRAVITY_SOUTH_EAST, // bottom-right of screen
-        GRAVITY_SOUTH_WEST, // bottom-left of screen
-        GRAVITY_WEST,       // vertically centered at left of screen
-        GRAVITY_NORTH_WEST, // top-left of screen
-        GRAVITY_MAX
+        GRAVITY_NONE = 0,   /*< skip >*/
+        GRAVITY_NORTH_EAST, /* top-right of screen */
+        GRAVITY_EAST,       /* vertically centered at right of screen */
+        GRAVITY_SOUTH_EAST, /* bottom-right of screen */
+        GRAVITY_SOUTH_WEST, /* bottom-left of screen */
+        GRAVITY_WEST,       /* vertically centered at left of screen */
+        GRAVITY_NORTH_WEST, /* top-left of screen */
+        GRAVITY_MAX         /*< skip >*/
 } Gravity;
 
 typedef enum
 {
-        SLOT_ALLOCATION_NONE = 0,
-        SLOT_ALLOCATION_FIXED,  // async. always in top, sync. always in bottom
-        SLOT_ALLOCATION_DYNAMIC // async. and sync can take top or bottom
+        SLOT_ALLOCATION_NONE = 0, /*< skip >*/
+        SLOT_ALLOCATION_FIXED,    /* async. always in top, sync. always in bottom */
+        SLOT_ALLOCATION_DYNAMIC   /* async. and sync can take top or bottom */
 } SlotAllocation;
 
 /* instance structure */

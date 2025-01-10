@@ -4,6 +4,9 @@ SUBDIRS = icons
 servicedir=$(datadir)/dbus-1/services
 service_DATA=org.freedesktop.Notifications.service
 
+
+gsettings_ENUM_NAMESPACE = com.canonical.NotifyOSD
+gsettings_ENUM_FILES=$(top_srcdir)/src/defaults.h
 gsettings_SCHEMAS=com.canonical.NotifyOSD.gschema.xml
 @GSETTINGS_RULES@
 

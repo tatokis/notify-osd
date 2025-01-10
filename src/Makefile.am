@@ -120,6 +120,26 @@ EXTRA_DIST =		\
 	display.c	\
 	$(NULL)
 
+glib_enum_headers = defaults.h
+
+enum-types.h: $(glib_enum_headers) enum-types.h.in
+	$(AM_V_GEN)$(GLIB_MKENUMS) \
+	--template=enum-types.h.in \
+	--output=$@ \
+	$(glib_enum_headers)
+
+enum-types.c: $(glib_enum_headers) enum-types.c.in enum-types.h
+	$(AM_V_GEN)$(GLIB_MKENUMS) \
+	--template=enum-types.c.in \
+	--output=$@ \
+	$(glib_enum_headers)
+
+# Build the enum types files before every other target
+BUILT_SOURCES += enum-types.h enum-types.c
+CLEANFILES = enum-types.h enum-types.c
+EXTRA_DIST += enum-types.h.in enum-types.c.in
+notify_osd_SOURCES += enum-types.h enum-types.c
+
 dist-hook:
 	cd $(distdir) ; rm -f $(CLEANFILES)
 
