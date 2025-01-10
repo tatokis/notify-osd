@@ -30,5 +30,10 @@
       <summary>Show notifications with system idle inhibited</summary>
       <description>Show notifications even if an application is inhibiting system idle.</description>
     </key>
+    <key name="slot-allocation" enum="com.canonical.NotifyOSD.SlotAllocation">
+      <default>'dynamic'</default>
+      <summary>How notifications are placed</summary>
+      <description>How notifications are placed. Fixed: Asynchronous notifications (such as volume change) are placed on the top slot, synchronous ones on the bottom slot. Dynamic: Either type can take either slot.</description>
+    </key>
   </schema>
 </schemalist>

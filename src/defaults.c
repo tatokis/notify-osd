@@ -81,6 +81,7 @@ enum
 	PROP_CLOSE_ON_CLICK,
 	PROP_FADE_ON_HOVER,
 	PROP_IGNORE_SESSION_IDLE_INHIBITED,
+	PROP_SLOT_ALLOCATION,
 };
 
 enum
@@ -138,6 +139,7 @@ enum
 #define DEFAULT_CLOSE_ON_CLICK       TRUE
 #define DEFAULT_FADE_ON_HOVER        TRUE
 #define DEFAULT_IGNORE_SESSION_IDLE_INHIBITED TRUE
+#define DEFAULT_SLOT_ALLOCATION      SLOT_ALLOCATION_DYNAMIC
 
 /* these values are interpreted as milliseconds-measurements and do comply to
  * the visual guide for jaunty-notifications */
@@ -153,6 +155,7 @@ enum
 #define GSETTINGS_FADE_ON_HOVER_KEY  "fade-on-hover"
 #define GSETTINGS_IGNORE_LIST_KEY    "action-ignore"
 #define GSETTINGS_IGNORE_SESSION_IDLE_INHIBITED_KEY "ignore-session-idle-inhibited"
+#define GSETTINGS_SLOT_ALLOCATION_KEY "slot-allocation"
 
 /* gnome settings */
 #define GNOME_DESKTOP_SCHEMA         "org.gnome.desktop.interface"
@@ -394,6 +397,12 @@ defaults_constructed (GObject* gobject)
 	                 "ignore-session-idle-inhibited",
 	                 G_SETTINGS_BIND_DEFAULT);
 
+	g_settings_bind (self->nosd_settings,
+	                 GSETTINGS_SLOT_ALLOCATION_KEY,
+	                 self,
+	                 "slot-allocation",
+	                 G_SETTINGS_BIND_DEFAULT);
+
 	/* FIXME: calling this here causes a segfault */
 	/* chain up to the parent class */
 	/*G_OBJECT_CLASS (defaults_parent_class)->constructed (gobject);*/
@@ -484,9 +493,6 @@ defaults_init (Defaults* self)
 			  "notify::gtk-xft-dpi",
 			  G_CALLBACK (_font_changed),
 			  self);
-
-	// use fixed slot-allocation for async. and sync. bubbles
-	self->slot_allocation = SLOT_ALLOCATION_FIXED;
 }
 
 static void
@@ -651,6 +657,10 @@ defaults_get_property (GObject*    gobject,
 
 	    case PROP_IGNORE_SESSION_IDLE_INHIBITED:
 		    g_value_set_boolean (value, defaults->ignore_session_idle_inhibited);
+		break;
+
+	    case PROP_SLOT_ALLOCATION:
+		    g_value_set_enum(value, defaults->slot_allocation);
 		break;
 
 		default :
@@ -861,6 +871,10 @@ defaults_set_property (GObject*      gobject,
 		    defaults->ignore_session_idle_inhibited = g_value_get_boolean (value);
 		break;
 
+	    case PROP_SLOT_ALLOCATION:
+		    defaults->slot_allocation = g_value_get_enum (value);
+		break;
+
 		default :
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (gobject, prop, spec);
 		break;
@@ -908,6 +922,7 @@ defaults_class_init (DefaultsClass* klass)
 	GParamSpec*   property_close_on_click;
 	GParamSpec*   property_fade_on_hover;
 	GParamSpec*   property_ignore_session_idle_inhibited;
+	GParamSpec*   property_slot_allocation;
 
 	gobject_class->constructed  = defaults_constructed;
 	gobject_class->dispose      = defaults_dispose;
@@ -1407,6 +1422,19 @@ defaults_class_init (DefaultsClass* klass)
 	g_object_class_install_property (gobject_class,
 	                 PROP_IGNORE_SESSION_IDLE_INHIBITED,
 	                 property_ignore_session_idle_inhibited);
+
+	property_slot_allocation = g_param_spec_enum (
+	            "slot-allocation",
+	            "slot-allocation",
+	            "Show notifications even if an application is inhibiting system idle.",
+	            SLOT_TYPE_ALLOCATION,
+	            DEFAULT_SLOT_ALLOCATION,
+	            G_PARAM_CONSTRUCT |
+	            G_PARAM_READWRITE |
+	            G_PARAM_STATIC_STRINGS);
+	g_object_class_install_property (gobject_class,
+	                 PROP_SLOT_ALLOCATION,
+	                 property_slot_allocation);
 }
 
 /*-- public API --------------------------------------------------------------*/
@@ -2069,7 +2097,11 @@ defaults_get_slot_allocation (Defaults *self)
 	if (!self || !IS_DEFAULTS (self))
 		return SLOT_ALLOCATION_NONE;
 
-	return self->slot_allocation;
+	SlotAllocation slot_allocation;
+
+	g_object_get (self, "slot-allocation", &slot_allocation, NULL);
+
+	return slot_allocation;
 }
 
 gboolean

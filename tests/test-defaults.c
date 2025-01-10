@@ -126,10 +126,10 @@ test_defaults_get_slot_allocation ()
                          !=,
                          SLOT_ALLOCATION_NONE);
 
-        // currently the default value should be SLOT_ALLOCATION_FIXED
+        // currently the default value should be SLOT_ALLOCATION_DYNAMIC
         g_assert_cmpint (defaults_get_slot_allocation (defaults),
                          ==,
-                         SLOT_ALLOCATION_FIXED);
+                         SLOT_ALLOCATION_DYNAMIC);
 
         // check if we can pass "crap" to the call without causing a crash
         g_assert_cmpint (defaults_get_slot_allocation (NULL),
