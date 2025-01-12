@@ -26,7 +26,6 @@ notify_osd_sources =		\
 	apport.c		\
 	log.c			\
 	util.c			\
-	timings.c		\
 	stack-blur.c				\
 	exponential-blur.c			\
 	gaussian-blur.c				\
@@ -55,7 +54,6 @@ notify_osd_headers =				\
 	log.h					\
 	apport.h				\
 	util.h					\
-	timings.h				\
 	stack-blur.h				\
 	exponential-blur.h			\
 	gaussian-blur.h				\
