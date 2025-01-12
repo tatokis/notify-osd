@@ -28,8 +28,6 @@
 
 #include "notification.h"
 
-G_DEFINE_TYPE (Notification, notification, G_TYPE_OBJECT);
-
 enum
 {
 	PROP_DUMMY = 0,
@@ -47,9 +45,6 @@ enum
 	PROP_URGENCY
 };
 
-#define GET_PRIVATE(o) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((o), NOTIFICATION_TYPE, NotificationPrivate))
-
 struct _NotificationPrivate {
 	gint       id;                  // unique notification-id
 	GString*   title;               // summary-text strdup'ed from setter
@@ -65,26 +60,7 @@ struct _NotificationPrivate {
 	Urgency    urgency;             // urgency-level: low, normal, high
 };
 
-#define RETURN_GCHAR(n, string)\
-	NotificationPrivate* priv;\
-	g_return_val_if_fail (IS_NOTIFICATION (n), NULL);\
-	priv = GET_PRIVATE (n);\
-	if (!priv->string)\
-		return NULL;\
-	return GET_PRIVATE (n)->string->str;
-
-#define SET_GCHAR(n, string)\
-	NotificationPrivate* priv;\
-	g_assert (IS_NOTIFICATION (n));\
-	if (!string)\
-		return;\
-	priv = GET_PRIVATE (n);\
-	if (priv->string)\
-	{\
-		g_string_free (priv->string, TRUE);\
-		priv->string = NULL;\
-	}\
-	priv->string = g_string_new (string);
+G_DEFINE_TYPE_WITH_PRIVATE (Notification, notification, G_TYPE_OBJECT);
 
 //-- private functions ---------------------------------------------------------
 
@@ -102,7 +78,7 @@ notification_dispose (GObject* gobject)
 	n = NOTIFICATION (gobject);
 	g_assert (n);
 	g_assert (IS_NOTIFICATION (n));
-	priv = GET_PRIVATE (n);
+	priv = notification_get_instance_private (n);
 	g_assert (priv);
 
 	// free any allocated resources
@@ -165,65 +141,58 @@ notification_get_property (GObject*    gobject,
 			   GParamSpec* spec)
 {
 	Notification* n = NOTIFICATION (gobject);
+	NotificationPrivate* priv = notification_get_instance_private (n);
 
 	// sanity checks are done in public getters
 
 	switch (prop)
 	{
 		case PROP_ID:
-			g_value_set_int (value, notification_get_id (n));
+		    g_value_set_int (value, priv->id);
 		break;
 
 		case PROP_TITLE:
-			g_value_set_string (value, notification_get_title (n));
+		    g_value_set_string (value, priv->title->str);
 		break;
 
 		case PROP_BODY:
-			g_value_set_string (value, notification_get_body (n));
+		    g_value_set_string (value, priv->body->str);
 		break;
 
 		case PROP_VALUE:
-			g_value_set_int (value, notification_get_value (n));
+		    g_value_set_int (value, priv->value);
 		break;
 
 		case PROP_ICON_THEMENAME:
-			g_value_set_string (value,
-					    notification_get_icon_themename (n));
+		    g_value_set_string (value, priv->icon_themename->str);
 		break;
 
 		case PROP_ICON_FILENAME:
-			g_value_set_string (value,
-					    notification_get_icon_filename (n));
+		    g_value_set_string (value, priv->icon_filename->str);
 		break;
 
 		case PROP_ICON_PIXBUF:
-			g_value_set_pointer (value,
-					     notification_get_icon_pixbuf (n));
+		    g_value_set_pointer (value, priv->icon_pixbuf);
 		break;
 
 		case PROP_ONSCREEN_TIME:
-			g_value_set_int (value,
-					 notification_get_onscreen_time (n));
+		    g_value_set_int (value, priv->onscreen_time);
 		break;
 
 		case PROP_SENDER_NAME:
-			g_value_set_string (value,
-					    notification_get_sender_name (n));
+		    g_value_set_string (value, priv->sender_name->str);
 		break;
 
 		case PROP_SENDER_PID:
-			g_value_set_int (value,
-					 notification_get_sender_pid (n));
+		    g_value_set_int (value, priv->sender_pid);
 		break;
 
 		case PROP_TIMESTAMP:
-			g_value_set_pointer (value,
-					     notification_get_timestamp (n));
+		    g_value_set_pointer (value, &priv->timestamp);
 		break;
 
 		case PROP_URGENCY:
-			g_value_set_int (value,
-					 notification_get_urgency (n));
+		    g_value_set_int (value, priv->urgency);
 		break;
 
 		default :
@@ -239,73 +208,118 @@ notification_set_property (GObject*      gobject,
 			   GParamSpec*   spec)
 {
 	Notification* n = NOTIFICATION (gobject);
+	NotificationPrivate* priv = notification_get_instance_private (n);
 
 	// sanity checks are done in the public setters
 
 	switch (prop)
 	{
 		case PROP_ID:
-			notification_set_id (n, g_value_get_int (value));
+		    priv->id = g_value_get_int (value);
+			if (priv->id < -1)
+				priv->id = -1;
 		break;
 
 		case PROP_TITLE:
-			notification_set_title (n, g_value_get_string (value));
+		    if(priv->title)
+				g_string_free(priv->title, TRUE);
+			priv->title = g_string_new(g_value_get_string (value));
 		break;
 
 		case PROP_BODY:
-			notification_set_body (n, g_value_get_string (value));
+		    if(priv->body)
+				g_string_free(priv->body, TRUE);
+			priv->body = g_string_new(g_value_get_string (value));
 		break;
 
 		case PROP_VALUE:
-			notification_set_value (n, g_value_get_int (value));
+		    // the allowed range for stored values is -1..101, thus a return-value of -2
+		    // indicates an error on behalf of the caller
+		    // valid range is -1..101, -2 is used to indicate it's "unset"
+		    priv->value = g_value_get_int (value);
+
+			G_STATIC_ASSERT(NOTIFICATION_VALUE_MIN_ALLOWED - 1 == -2);
+
+			if (priv->value < NOTIFICATION_VALUE_MIN_ALLOWED - 1)
+				priv->value = NOTIFICATION_VALUE_MIN_ALLOWED;
+			else if (priv->value > NOTIFICATION_VALUE_MAX_ALLOWED)
+				priv->value = NOTIFICATION_VALUE_MAX_ALLOWED;
 		break;
 
 		case PROP_ICON_THEMENAME:
-			notification_set_icon_themename (
-				n,
-				g_value_get_string (value));
+		    if(priv->icon_themename)
+				g_string_free(priv->icon_themename, TRUE);
+			priv->icon_themename = g_string_new(g_value_get_string (value));
 		break;
 
 		case PROP_ICON_FILENAME:
-			notification_set_icon_filename (
-				n,
-				g_value_get_string (value));
+		    if(priv->icon_filename)
+				g_string_free(priv->icon_filename, TRUE);
+			priv->icon_filename = g_string_new(g_value_get_string (value));
 		break;
 
 		case PROP_ICON_PIXBUF:
-			notification_set_icon_pixbuf (
-				n,
-				g_value_get_pointer (value));
+		    if(priv->icon_pixbuf)
+				g_object_unref (priv->icon_pixbuf);
+			// create a new/private copy of the supplied pixbuf
+			priv->icon_pixbuf = gdk_pixbuf_copy (g_value_get_pointer (value));
 		break;
 
 		case PROP_ONSCREEN_TIME:
-			notification_set_onscreen_time (
-				n,
-				g_value_get_int (value));
+	    {
+		    gint onscreen_time = g_value_get_int (value);
+			// FIXME: -1?????
+			// a return-value of -1 indicates an error on behalf of the caller, a
+			// return-value of 0 would indicate that a notification has not been displayed
+			// yet
+
+			// onscreen-time is non negative and can only increase, not decrease
+			if (onscreen_time >= 0 && onscreen_time > priv->onscreen_time)
+				priv->onscreen_time = onscreen_time;
+	    }
 		break;
 
 		case PROP_SENDER_NAME:
-			notification_set_sender_name (
-				n,
-				g_value_get_string (value));
+		    if(priv->sender_name)
+				g_string_free(priv->sender_name, TRUE);
+			priv->sender_name = g_string_new(g_value_get_string (value));
 		break;
 
 		case PROP_SENDER_PID:
-			notification_set_sender_pid (
-				n,
-				g_value_get_int (value));
+	    {
+		    gint sender_pid = g_value_get_int (value);
+			// it's hardly possible we'll get a notification from init, but anyway
+			if (sender_pid > 0)
+				priv->sender_pid = sender_pid;
+	    }
 		break;
 
 		case PROP_TIMESTAMP:
-			notification_set_timestamp (
-				n,
-				g_value_get_pointer (value));
+	    {
+		    GTimeVal* timestamp = g_value_get_pointer (value);
+			// don't store older timestamp over newer one
+			if (timestamp->tv_sec > priv->timestamp.tv_sec
+			        || (timestamp->tv_sec == priv->timestamp.tv_sec
+			            && timestamp->tv_usec > priv->timestamp.tv_usec))
+			{
+				priv->timestamp.tv_sec  = timestamp->tv_sec;
+				priv->timestamp.tv_usec = timestamp->tv_usec;
+			}
+	    }
 		break;
 
 		case PROP_URGENCY:
-			notification_set_urgency (
-				n,
-				g_value_get_int (value));
+	    {
+		    gint urgency = g_value_get_int (value);
+
+			// URGENCY_NONE is meant to indicate the "unset" state
+			// also, don't store any values outside of allowed range LOW..HIGH
+			if (urgency == URGENCY_LOW    ||
+			    urgency == URGENCY_NORMAL ||
+			    urgency == URGENCY_HIGH   ||
+			    urgency == URGENCY_NONE)
+				priv->urgency = urgency;
+	    }
 		break;
 
 		default :
@@ -330,8 +344,6 @@ notification_class_init (NotificationClass* klass)
 	GParamSpec*   property_sender_pid;
 	GParamSpec*   property_timestamp;
 	GParamSpec*   property_urgency;
-
-	g_type_class_add_private (klass, sizeof (NotificationPrivate));
 
 	gobject_class->dispose      = notification_dispose;
 	gobject_class->finalize     = notification_finalize;
@@ -478,307 +490,10 @@ notification_new ()
 {
 	const GTimeVal timestamp = {0};
 
+#warning "notification_new will fail"
+	// FIXME: Create a GdkPixbuf here (or somewhere)
+	// otherwise the constructor fails.
 	return g_object_new (NOTIFICATION_TYPE,
 	                     "timestamp", &timestamp,
 	                     NULL);
-}
-
-gint
-notification_get_id (Notification* n)
-{
-	g_return_val_if_fail (IS_NOTIFICATION (n), -1);
-
-	return GET_PRIVATE (n)->id;
-}
-
-// -1 is meant to "unset" the id, 0 is the smallest possible PID, but very
-// unlikely to ever be passed around
-void
-notification_set_id (Notification* n,
-		     gint          id)
-{
-	g_assert (IS_NOTIFICATION (n));
-
-	// IDs can't be negative, except for -1 to indicate it's "unset"
-	if (id < -1)
-		return;
-
-	GET_PRIVATE (n)->id = id;
-}
-
-gchar*
-notification_get_title (Notification* n)
-{
-	RETURN_GCHAR (n, title)
-}
-
-void
-notification_set_title (Notification* n,
-			const gchar*  title)
-{
-	SET_GCHAR (n, title)
-}
-
-gchar*
-notification_get_body (Notification* n)
-{
-	RETURN_GCHAR (n, body)
-}
-
-void
-notification_set_body (Notification* n,
-		       const gchar*  body)
-{
-	SET_GCHAR (n, body)
-}
-
-// the allowed range for stored values is -1..101, thus a return-value of -2
-// indicates an error on behalf of the caller
-gint
-notification_get_value (Notification* n)
-{
-	g_return_val_if_fail (IS_NOTIFICATION (n), -2);
-
-	return GET_PRIVATE (n)->value;
-}
-
-// valid range is -1..101, -2 is used to indicate it's "unset"
-void
-notification_set_value (Notification* n,
-			gint          value)
-{
-	NotificationPrivate* priv;
-
-	g_assert (IS_NOTIFICATION (n));
-
-	priv = GET_PRIVATE (n);
-
-	// this is used to indicate the "unset" state
-	if (value == -2)
-	{
-		priv->value = value;
-		return;
-	}
-
-	// don't store any values outside of allowed range -1..101
-	if (value <= NOTIFICATION_VALUE_MIN_ALLOWED)
-	{
-		priv->value = NOTIFICATION_VALUE_MIN_ALLOWED;
-		return;
-	}
-
-	if (value >= NOTIFICATION_VALUE_MAX_ALLOWED)
-	{
-		priv->value = NOTIFICATION_VALUE_MAX_ALLOWED;
-		return;
-	}
-
-	priv->value = value;
-}
-
-gchar*
-notification_get_icon_themename (Notification* n)
-{
-	RETURN_GCHAR (n, icon_themename)
-}
-
-void
-notification_set_icon_themename (Notification* n,
-				 const gchar*  icon_themename)
-{
-	SET_GCHAR (n, icon_themename)
-}
-
-gchar*
-notification_get_icon_filename (Notification* n)
-{
-	RETURN_GCHAR (n, icon_filename)
-}
-
-void
-notification_set_icon_filename (Notification* n,
-				const gchar*  icon_filename)
-{
-	SET_GCHAR (n, icon_filename)
-}
-
-GdkPixbuf*
-notification_get_icon_pixbuf (Notification* n)
-{
-	NotificationPrivate* priv;
-
-	g_return_val_if_fail (IS_NOTIFICATION (n), NULL);
-
-	priv = GET_PRIVATE (n);
-
-	if (!priv->icon_pixbuf)
-		return NULL;
-
-	return GET_PRIVATE (n)->icon_pixbuf;
-}
-
-void
-notification_set_icon_pixbuf (Notification*    n,
-			      const GdkPixbuf* icon_pixbuf)
-{
-	NotificationPrivate* priv;
-
-	// sanity checks
-	g_assert (IS_NOTIFICATION (n));
-	if (!icon_pixbuf)
-		return;
-
-	priv = GET_PRIVATE (n);
-
-	// free any previous stored pixbuf
-	if (priv->icon_pixbuf)
-	{
-		g_object_unref (priv->icon_pixbuf);
-		priv->icon_pixbuf = NULL;
-	}
-
-	// create a new/private copy of the supplied pixbuf
-	priv->icon_pixbuf = gdk_pixbuf_copy (icon_pixbuf);
-}
-
-// a return-value of -1 indicates an error on behalf of the caller, a
-// return-value of 0 would indicate that a notification has not been displayed
-// yet
-gint
-notification_get_onscreen_time (Notification* n)
-{
-	g_return_val_if_fail (IS_NOTIFICATION (n), -1);
-
-	return GET_PRIVATE (n)->onscreen_time;
-}
-
-// only onscreen_time values <= 0 are considered valid
-void
-notification_set_onscreen_time (Notification* n,
-				gint          onscreen_time)
-{
-	NotificationPrivate* priv;
-
-	g_assert (IS_NOTIFICATION (n));
-
-	priv = GET_PRIVATE (n);
-
-	// avoid storing negative values
-	if (onscreen_time < 0)
-		return;
-
-	// onscreen-time can only increase not decrease
-	if (priv->onscreen_time > onscreen_time)
-		return;
-
-	// you made it upto here, congratulations... let's store the new value
-	priv->onscreen_time = onscreen_time;
-}
-
-gchar*
-notification_get_sender_name (Notification* n)
-{
-	RETURN_GCHAR (n, sender_name)
-}
-
-void
-notification_set_sender_name (Notification* n,
-			      const gchar*  sender_name)
-{
-	SET_GCHAR (n, sender_name)
-}
-
-// a return-value of 0 indicates an error on behalf of the caller, PIDs are
-// never negative
-gint
-notification_get_sender_pid (Notification* n)
-{
-	g_return_val_if_fail (IS_NOTIFICATION (n), 0);
-
-	return GET_PRIVATE (n)->sender_pid;
-}
-
-void
-notification_set_sender_pid (Notification* n,
-			     const gint    sender_pid)
-{
-	g_assert (IS_NOTIFICATION (n));
-
-	// it's hardly possible we'll get a notification from init, but anyway
-	if (sender_pid <= 0)
-		return;
-
-	GET_PRIVATE (n)->sender_pid = sender_pid;
-}
-
-GTimeVal*
-notification_get_timestamp (Notification* n)
-{
-	NotificationPrivate* priv;
-
-	g_return_val_if_fail (IS_NOTIFICATION (n), NULL);
-
-	priv = GET_PRIVATE (n);
-
-	return &priv->timestamp;
-}
-
-void
-notification_set_timestamp (Notification*   n,
-			    const GTimeVal* timestamp)
-{
-	NotificationPrivate* priv;
-
-	// sanity checks
-	g_assert (IS_NOTIFICATION (n));
-	if (!timestamp)
-		return;
-
-	priv = GET_PRIVATE (n);
-
-	// don't store older timestamp over newer one
-	if (priv->timestamp.tv_sec > timestamp->tv_sec)
-		return;
-
-	if (priv->timestamp.tv_sec == timestamp->tv_sec)
-		if (priv->timestamp.tv_usec > timestamp->tv_usec)
-			return;
-
-	// new timestamp certainly more current that stored one
-	priv->timestamp.tv_sec  = timestamp->tv_sec;
-	priv->timestamp.tv_usec = timestamp->tv_usec;
-}
-
-gint
-notification_get_urgency (Notification* n)
-{
-	g_return_val_if_fail (IS_NOTIFICATION (n), URGENCY_NONE);
-
-	return GET_PRIVATE (n)->urgency;
-}
-
-void
-notification_set_urgency (Notification* n,
-			  Urgency       urgency)
-{
-	NotificationPrivate* priv;
-
-	g_assert (IS_NOTIFICATION (n));
-
-	priv = GET_PRIVATE (n);
-
-	// URGENCY_NONE is meant to indicate the "unset" state
-	if (urgency == URGENCY_NONE)
-	{
-		priv->urgency = URGENCY_NONE;
-		return;
-	}
-
-	// don't store any values outside of allowed range LOW..HIGH
-	if (urgency != URGENCY_LOW    &&
-	    urgency != URGENCY_NORMAL &&
-	    urgency != URGENCY_HIGH)
-		return;
-
-	GET_PRIVATE (n)->urgency = urgency;
 }
