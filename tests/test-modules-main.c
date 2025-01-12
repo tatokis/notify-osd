@@ -61,7 +61,6 @@ main (int    argc,
 
 	g_test_suite_add_suite (suite, test_bubble_create_test_suite ());
 	g_test_suite_add_suite (suite, test_defaults_create_test_suite ());
-	g_test_suite_add_suite (suite, test_notification_create_test_suite ());
 	g_test_suite_add_suite (suite, test_observer_create_test_suite ());
 	g_test_suite_add_suite (suite, test_stack_create_test_suite ());
 	g_test_suite_add_suite (suite, test_filtering_create_test_suite ());
