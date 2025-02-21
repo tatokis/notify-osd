@@ -21,7 +21,7 @@
       <description>Fade notification bubble when cursor is hovering over it.</description>
     </key>
     <key name="action-ignore" type="as">
-      <default>['nm-applet', 'evolution-alarm-notify']</default>
+      <default>['nm-applet', 'evolution-alarm-notify', 'firefox', 'waterfox']</default>
       <summary>Application action ignore list</summary>
       <description>List of applications to advertise support for actions (buttons) to.</description>
     </key>
