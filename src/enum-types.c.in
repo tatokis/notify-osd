@@ -12,7 +12,7 @@ GType
 {
     static GType static_g_@type@_type_id = 0;
 
-    if (g_once_init_enter_pointer (&static_g_@type@_type_id))
+    if (g_once_init_enter (&static_g_@type@_type_id))
     {
         static const G@Type@Value values[] = {
 /*** END value-header ***/
@@ -27,7 +27,7 @@ GType
 
         GType g_@type@_type_id =
             g_@type@_register_static (g_intern_static_string ("@EnumName@"), values);
-        g_once_init_leave_pointer (&static_g_@type@_type_id, g_@type@_type_id);
+        g_once_init_leave (&static_g_@type@_type_id, g_@type@_type_id);
     }
 
     return static_g_@type@_type_id;
